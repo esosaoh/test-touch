@@ -1,0 +1,16 @@
+{
+    "name": "tuio-touch-app",
+    "version": "1.0.0",
+    "description": "TUIO touch application",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "dependencies": {
+      "express": "^4.17.1",
+      "tuio": "^1.0.0"
+    },
+    "author": "Esosa",
+    "license": "ISC"
+  }
+  

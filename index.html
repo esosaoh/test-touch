@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Touch Test Website with Local Tuio.js</title>
+  <script src="Tuio.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+      transition: background-color 0.5s ease;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      margin: 20px;
+      cursor: pointer;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .touch-point {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: rgba(255, 0, 0, 0.5);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Touch Test Website with Local Tuio.js</h1>
+  <button id="colorBtn">Change Background Color</button>
+  <button id="alertBtn">Show Alert</button>
+  <script>
+    // Colors to cycle through
+    const colors = ['#ff9999', '#99ff99', '#9999ff'];
+    let currentColorIndex = 0;
+    
+    // Button to change background color
+    const colorButton = document.getElementById('colorBtn');
+    colorButton.addEventListener('click', () => {
+      document.body.style.backgroundColor = colors[currentColorIndex];
+      currentColorIndex = (currentColorIndex + 1) % colors.length;
+    });
+    
+    // Button to show an alert
+    const alertButton = document.getElementById('alertBtn');
+    alertButton.addEventListener('click', () => {
+      alert('Button clicked!');
+    });
+    
+    // TUIO integration
+    document.addEventListener('DOMContentLoaded', function() {
+      var client = new Tuio.Client({
+        host: "http://localhost:5000" // Make sure this matches your TUIO server port
+      });
+
+      function createTouchPoint(x, y) {
+        const touchPoint = document.createElement('div');
+        touchPoint.className = 'touch-point';
+        touchPoint.style.left = `${x}px`;
+        touchPoint.style.top = `${y}px`;
+        document.body.appendChild(touchPoint);
+        return touchPoint;
+      }
+
+      client.on("addTuioCursor", function(addCursor) {
+        console.log("Touch started at x:" + addCursor.x + ", y:" + addCursor.y);
+        const coords = { x: addCursor.x * window.innerWidth, y: addCursor.y * window.innerHeight };
+        addCursor.touchPoint = createTouchPoint(coords.x, coords.y);
+        
+        // Check if touch is on a button and trigger click
+        const elementAtPoint = document.elementFromPoint(coords.x, coords.y);
+        if (elementAtPoint && elementAtPoint.tagName === 'BUTTON') {
+          elementAtPoint.click();
+        }
+      });
+
+      client.on("updateTuioCursor", function(updateCursor) {
+        console.log("Touch moved to x:" + updateCursor.x + ", y:" + updateCursor.y);
+        if (updateCursor.touchPoint) {
+          const coords = { x: updateCursor.x * window.innerWidth, y: updateCursor.y * window.innerHeight };
+          updateCursor.touchPoint.style.left = `${coords.x}px`;
+          updateCursor.touchPoint.style.top = `${coords.y}px`;
+        }
+      });
+
+      client.on("removeTuioCursor", function(removeCursor) {
+        console.log("Touch ended at x:" + removeCursor.x + ", y:" + removeCursor.y);
+        if (removeCursor.touchPoint) {
+          document.body.removeChild(removeCursor.touchPoint);
+        }
+      });
+
+      client.connect();
+      console.log("TUIO client connected");
+    });
+  </script>
+</body>
+</html>
